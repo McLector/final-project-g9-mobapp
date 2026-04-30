@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "StarkRent",
+    "slug": "starkrent",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0F172A"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.starkrent.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Used to capture equipment photos.",
+        "NSPhotoLibraryUsageDescription": "Used to attach equipment images.",
+        "NSPhotoLibraryAddUsageDescription": "Used to save equipment images."
+      }
+    },
+    "android": {
+      "package": "com.starkrent.app",
+      "permissions": [
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "CAMERA"
+      ]
+    },
+    "plugins": [
+      "expo-router",
+      "expo-image-picker"
+    ],
+    "scheme": "starkrent",
+    "web": {
+      "bundler": "metro",
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}

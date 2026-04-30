@@ -1,0 +1,40 @@
+{
+  "name": "starkrent",
+  "license": "0BSD",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "scripts": {
+    "start": "npx expo start",
+    "android": "npx expo start --android",
+    "ios": "npx expo start --ios",
+    "web": "npx expo start --web"
+  },
+  "dependencies": {
+    "@expo/vector-icons": "^14.0.4",
+    "@react-native-async-storage/async-storage": "~2.1.2",
+    "@react-navigation/bottom-tabs": "^7.2.0",
+    "@react-navigation/native": "^7.1.28",
+    "@react-navigation/native-stack": "^7.4.2",
+    "@supabase/supabase-js": "^2.39.0",
+    "expo": "~54.0.33",
+    "expo-constants": "~18.0.9",
+    "expo-image-picker": "~15.0.7",
+    "expo-linear-gradient": "~15.0.8",
+    "expo-linking": "~8.0.8",
+    "expo-router": "~6.0.14",
+    "expo-status-bar": "~3.0.9",
+    "react": "19.1.0",
+    "react-native": "0.81.5",
+    "react-native-gesture-handler": "~2.24.0",
+    "react-native-safe-area-context": "~5.6.0",
+    "react-native-screens": "~4.16.0",
+    "react-native-url-polyfill": "^2.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "~19.1.0",
+    "@types/react-native": "^0.73.0",
+    "babel-preset-expo": "^12.0.0",
+    "typescript": "~5.9.2"
+  },
+  "private": true
+}
