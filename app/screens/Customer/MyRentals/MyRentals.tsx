@@ -104,6 +104,38 @@ const MyRentals = () => {
     setExtendVisible(true);
   };
 
+  const handleConfirmReceipt = (rentalId: string) => {
+    Alert.alert('Confirm Receipt', 'Confirm that you have received and are now using the equipment?', [
+      { text: 'Not Yet', style: 'cancel' },
+      {
+        text: 'Confirm',
+        onPress: async () => {
+          const { error } = await supabase
+            .from('rentals').update({ status: 'active' })
+            .eq('id', rentalId).eq('customer_id', user?.id).eq('status', 'approved');
+          if (error) showError(error.message);
+          else { setSelected(null); load(); showSuccess('Rental marked as active'); }
+        },
+      },
+    ]);
+  };
+
+  const handleReturn = (rentalId: string) => {
+    Alert.alert('Return Equipment', 'Confirm that you are returning this equipment?', [
+      { text: 'Not Yet', style: 'cancel' },
+      {
+        text: 'Confirm Return', style: 'destructive',
+        onPress: async () => {
+          const { error } = await supabase
+            .from('rentals').update({ status: 'returned' })
+            .eq('id', rentalId).eq('customer_id', user?.id).eq('status', 'active');
+          if (error) showError(error.message);
+          else { setSelected(null); load(); showSuccess('Equipment returned successfully'); }
+        },
+      },
+    ]);
+  };
+
   const handleExtend = async () => {
     if (!selected || !extendDate) return;
     if (extendDate <= selected.end_date) {
@@ -183,7 +215,7 @@ const MyRentals = () => {
             >
               <MaterialIcons
                 name={FILTER_ICONS[f]}
-                size={12}
+                size={14}
                 color={active ? '#FFF' : colors.textMuted}
               />
               <Text style={[s.chipText, { color: active ? '#FFF' : colors.textSecondary }]}>
@@ -339,6 +371,28 @@ const MyRentals = () => {
                     </TouchableOpacity>
                   )}
 
+                  {/* Confirm receipt for approved rentals */}
+                  {selected.status === 'approved' && (
+                    <TouchableOpacity
+                      style={[s.actionOutline, { borderColor: colors.success }]}
+                      onPress={() => handleConfirmReceipt(selected.id)}
+                    >
+                      <MaterialIcons name="inventory" size={16} color={colors.success} />
+                      <Text style={[s.actionOutlineText, { color: colors.success }]}>Confirm Receipt</Text>
+                    </TouchableOpacity>
+                  )}
+
+                  {/* Return for active rentals */}
+                  {selected.status === 'active' && (
+                    <TouchableOpacity
+                      style={[s.actionOutline, { borderColor: colors.success }]}
+                      onPress={() => handleReturn(selected.id)}
+                    >
+                      <MaterialIcons name="assignment-return" size={16} color={colors.success} />
+                      <Text style={[s.actionOutlineText, { color: colors.success }]}>Return Equipment</Text>
+                    </TouchableOpacity>
+                  )}
+
                   {/* Cancel for pending */}
                   {selected.status === 'pending' && (
                     <TouchableOpacity
@@ -468,16 +522,16 @@ const s = StyleSheet.create({
   },
   searchInput: { flex: 1, fontSize: 13, fontWeight: '500' },
   filterWrap: { borderBottomWidth: 1 },
-  filterScroll: { paddingHorizontal: 16, paddingVertical: 10, gap: 7, flexDirection: 'row' },
+  filterScroll: { paddingHorizontal: 16, paddingVertical: 12, gap: 8, flexDirection: 'row' },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 11,
-    paddingVertical: 6,
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
     borderRadius: 20,
   },
-  chipText: { fontSize: 11, fontWeight: '700' },
+  chipText: { fontSize: 13, fontWeight: '700' },
   list: { paddingTop: 14, paddingHorizontal: 16, paddingBottom: 32, gap: 10 },
   card: {
     flexDirection: 'row',

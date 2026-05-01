@@ -89,8 +89,8 @@ export interface Rental {
 export type RootStackParamList = {
   Login: undefined;
   Register: undefined;
-  CustomerTabs: NavigatorScreenParams<CustomerStackParamList> | undefined;
-  AdminTabs: NavigatorScreenParams<AdminStackParamList> | undefined;
+  CustomerRoot: NavigatorScreenParams<CustomerStackParamList> | undefined;
+  AdminRoot: NavigatorScreenParams<AdminStackParamList> | undefined;
 };
 
 export type CustomerTabParamList = {
@@ -104,10 +104,8 @@ export type AdminTabParamList = {
   AdminDashboard: undefined;
   Equipment: undefined;
   RentalRequests: undefined;
-  ActiveRentals: undefined;
   Users: undefined;
   AdminAnalytics: undefined;
-  ExtensionTab: undefined;
   AdminProfile: undefined;
 };
 
@@ -125,6 +123,7 @@ export type CustomerStackParamList = {
 export type AdminStackParamList = {
   AdminTabs: NavigatorScreenParams<AdminTabParamList> | undefined;
   EquipmentForm: { equipmentId?: string };
+  ActiveRentals: undefined;
   RentalDetail: { rentalId: string };
   UserDetail: { userId: string };
   ExtensionRequests: undefined;

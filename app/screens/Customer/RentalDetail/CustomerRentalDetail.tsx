@@ -78,6 +78,42 @@ const CustomerRentalDetail = ({ navigation, route }: Props) => {
     );
   };
 
+  const handleConfirmReceipt = () => {
+    Alert.alert('Confirm Receipt', 'Confirm that you have received and are now using the equipment?', [
+      { text: 'Not Yet', style: 'cancel' },
+      {
+        text: 'Confirm',
+        onPress: async () => {
+          setActionLoading(true);
+          const { error } = await supabase
+            .from('rentals').update({ status: 'active' })
+            .eq('id', rentalId).eq('customer_id', user?.id).eq('status', 'approved');
+          setActionLoading(false);
+          if (error) showError(error.message);
+          else { showSuccess('Rental marked as active'); load(); }
+        },
+      },
+    ]);
+  };
+
+  const handleReturn = () => {
+    Alert.alert('Return Equipment', 'Confirm that you are returning this equipment?', [
+      { text: 'Not Yet', style: 'cancel' },
+      {
+        text: 'Confirm Return', style: 'destructive',
+        onPress: async () => {
+          setActionLoading(true);
+          const { error } = await supabase
+            .from('rentals').update({ status: 'returned' })
+            .eq('id', rentalId).eq('customer_id', user?.id).eq('status', 'active');
+          setActionLoading(false);
+          if (error) showError(error.message);
+          else { showSuccess('Equipment returned successfully'); load(); }
+        },
+      },
+    ]);
+  };
+
   const openExtend = () => {
     if (!rental) return;
     const d = new Date(rental.end_date);
@@ -222,6 +258,24 @@ const CustomerRentalDetail = ({ navigation, route }: Props) => {
           </TouchableOpacity>
         )}
 
+        {rental.status === 'approved' && (
+          <TouchableOpacity
+            style={[CustomerRentalDetailStyle.extendBtn, { backgroundColor: colors.successLight, borderColor: colors.success }]}
+            onPress={handleConfirmReceipt}
+            disabled={actionLoading}
+            activeOpacity={0.8}
+          >
+            {actionLoading ? <ActivityIndicator color={colors.success} /> : (
+              <>
+                <MaterialIcons name="inventory" size={20} color={colors.success} />
+                <Text style={[CustomerRentalDetailStyle.extendBtnText, { color: colors.success }]}>
+                  Confirm Receipt
+                </Text>
+              </>
+            )}
+          </TouchableOpacity>
+        )}
+
         {(rental.status === 'approved' || rental.status === 'active') && (
           <TouchableOpacity
             style={[CustomerRentalDetailStyle.extendBtn, { backgroundColor: colors.infoLight, borderColor: colors.info }]}
@@ -233,6 +287,24 @@ const CustomerRentalDetail = ({ navigation, route }: Props) => {
             <Text style={[CustomerRentalDetailStyle.extendBtnText, { color: colors.info }]}>
               Request Extension
             </Text>
+          </TouchableOpacity>
+        )}
+
+        {rental.status === 'active' && (
+          <TouchableOpacity
+            style={[CustomerRentalDetailStyle.extendBtn, { backgroundColor: colors.successLight, borderColor: colors.success }]}
+            onPress={handleReturn}
+            disabled={actionLoading}
+            activeOpacity={0.8}
+          >
+            {actionLoading ? <ActivityIndicator color={colors.success} /> : (
+              <>
+                <MaterialIcons name="assignment-return" size={20} color={colors.success} />
+                <Text style={[CustomerRentalDetailStyle.extendBtnText, { color: colors.success }]}>
+                  Return Equipment
+                </Text>
+              </>
+            )}
           </TouchableOpacity>
         )}
       </ScrollView>

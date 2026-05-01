@@ -15,6 +15,7 @@ import { useToast } from '../../../../src/hooks/useToast';
 import { NOTIFICATIONS_CHANGED } from '../../../../src/components/NotificationBell/NotificationBell';
 import { Rental, RentalStatus, AdminStackParamList } from '../../../../src/types';
 import { formatCurrency, formatDate, getDaysDiff, toDateString } from '../../../../src/utils/format';
+import { assertRangeAvailability } from '../../../../src/utils/availability';
 import StatusBadge from '../../../../src/components/StatusBadge/StatusBadge';
 import DatePicker from '../../../../src/components/DatePicker/DatePicker';
 import LoadingSpinner from '../../../../src/components/LoadingSpinner/LoadingSpinner';
@@ -78,9 +79,25 @@ const RentalDetail = ({ navigation, route }: Props) => {
     if (!rental) return;
     setActionLoading(true);
     try {
+      if (newStatus === 'approved' || newStatus === 'active') {
+        await assertRangeAvailability(
+          rental.equipment_id,
+          rental.start_date,
+          rental.end_date,
+          rental.quantity,
+          rental.id
+        );
+      }
+
+      const dbStatus = newStatus === 'rejected' ? 'cancelled' : newStatus;
+      const cleanNotes = adminNotes.trim();
+      const dbNotes = newStatus === 'rejected'
+        ? ['Rejected by admin.', cleanNotes].filter(Boolean).join(' ')
+        : cleanNotes || null;
+
       const { error } = await supabase
         .from('rentals')
-        .update({ status: newStatus, admin_notes: adminNotes.trim() || null, ...extra })
+        .update({ status: dbStatus, admin_notes: dbNotes, ...extra })
         .eq('id', rental.id);
       if (error) throw new Error(error.message);
       showSuccess({ approved: 'Rental approved', rejected: 'Rental rejected', active: 'Marked as active', returned: 'Equipment returned', cancelled: 'Rental cancelled', pending: 'Updated' }[newStatus] ?? 'Updated');

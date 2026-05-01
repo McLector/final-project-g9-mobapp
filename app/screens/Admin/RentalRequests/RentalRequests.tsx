@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator, Alert, FlatList, Modal,
   RefreshControl, ScrollView, StyleSheet,
-  Text, TextInput, TouchableOpacity, View,
+  Text, TextInput, TouchableOpacity, View, DeviceEventEmitter,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -12,14 +12,13 @@ import useTheme from '../../../../src/hooks/useTheme';
 import { useToast } from '../../../../src/hooks/useToast';
 import { Rental, RentalStatus, AdminStackParamList } from '../../../../src/types';
 import { formatCurrency, formatDate, getDaysDiff } from '../../../../src/utils/format';
+import { assertRangeAvailability } from '../../../../src/utils/availability';
 import StatusBadge from '../../../../src/components/StatusBadge/StatusBadge';
 import EmptyState from '../../../../src/components/EmptyState/EmptyState';
 import LoadingSpinner from '../../../../src/components/LoadingSpinner/LoadingSpinner';
+import { NOTIFICATIONS_CHANGED } from '../../../../src/components/NotificationBell/NotificationBell';
 
-type FilterType = RentalStatus | 'all';
 type Props = { navigation: NativeStackNavigationProp<AdminStackParamList> };
-
-const FILTERS: FilterType[] = ['all', 'pending', 'approved', 'active', 'returned', 'rejected', 'cancelled'];
 
 const STATUS_BAR_COLOR: Record<string, string> = {
   pending: '#D97706', approved: '#0284C7', active: '#16A34A',
@@ -30,20 +29,27 @@ const RentalRequests = ({ navigation }: Props) => {
   const { colors } = useTheme();
   const { showSuccess, showError } = useToast();
   const [rentals, setRentals] = useState<Rental[]>([]);
-  const [filter, setFilter] = useState<FilterType>('pending');
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selected, setSelected] = useState<Rental | null>(null);
   const [adminNotes, setAdminNotes] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
+  const [pendingExtensions, setPendingExtensions] = useState(0);
 
   const load = useCallback(async () => {
-    const { data } = await supabase
-      .from('rentals')
-      .select('*, equipment(*), customer:profiles(full_name, email, phone)')
-      .order('created_at', { ascending: false });
+    const [{ data }, extensionsRes] = await Promise.all([
+      supabase
+        .from('rentals')
+        .select('*, equipment(*), customer:profiles(full_name, email, phone)')
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('extension_requests')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'pending'),
+    ]);
     if (data) setRentals(data as Rental[]);
+    setPendingExtensions(extensionsRes.count ?? 0);
     setLoading(false);
     setRefreshing(false);
   }, []);
@@ -52,9 +58,10 @@ const RentalRequests = ({ navigation }: Props) => {
   const onRefresh = useCallback(() => { setRefreshing(true); load(); }, [load]);
 
   const pendingCount = rentals.filter((r) => r.status === 'pending').length;
+  const ongoingCount = rentals.filter((r) => r.status === 'approved' || r.status === 'active').length;
 
   const filtered = rentals.filter((r) => {
-    const matchesFilter = filter === 'all' || r.status === filter;
+    const matchesFilter = r.status === 'pending';
     const q = search.toLowerCase().trim();
     const matchesSearch = !q ||
       (r.equipment?.name ?? '').toLowerCase().includes(q) ||
@@ -65,13 +72,30 @@ const RentalRequests = ({ navigation }: Props) => {
   const updateStatus = async (rentalId: string, newStatus: RentalStatus) => {
     setActionLoading(true);
     try {
-      const { error } = await supabase.rpc('process_rental_status', {
-        p_rental_id: rentalId,
-        p_new_status: newStatus,
-        p_admin_notes: adminNotes.trim() || null,
-      });
+      const rental = rentals.find((item) => item.id === rentalId);
+      if ((newStatus === 'approved' || newStatus === 'active') && rental) {
+        await assertRangeAvailability(
+          rental.equipment_id,
+          rental.start_date,
+          rental.end_date,
+          rental.quantity,
+          rental.id
+        );
+      }
+
+      const dbStatus = newStatus === 'rejected' ? 'cancelled' : newStatus;
+      const cleanNotes = adminNotes.trim();
+      const dbNotes = newStatus === 'rejected'
+        ? ['Rejected by admin.', cleanNotes].filter(Boolean).join(' ')
+        : cleanNotes || null;
+
+      const { error } = await supabase
+        .from('rentals')
+        .update({ status: dbStatus, admin_notes: dbNotes })
+        .eq('id', rentalId);
       if (error) throw new Error(error.message);
-      showSuccess(`Rental ${newStatus} successfully`);
+      showSuccess(newStatus === 'rejected' ? 'Rental rejected successfully' : `Rental ${newStatus} successfully`);
+      DeviceEventEmitter.emit(NOTIFICATIONS_CHANGED);
       setSelected(null);
       setAdminNotes('');
       load();
@@ -122,7 +146,7 @@ const RentalRequests = ({ navigation }: Props) => {
           <View>
             <Text style={[s.title, { color: colors.text }]}>Rental Requests</Text>
             <Text style={[s.subtitle, { color: colors.textMuted }]}>
-              {filtered.length} {filter} rental{filtered.length !== 1 ? 's' : ''}
+              {filtered.length} pending request{filtered.length !== 1 ? 's' : ''}
             </Text>
           </View>
           {pendingCount > 0 && (
@@ -130,6 +154,36 @@ const RentalRequests = ({ navigation }: Props) => {
               <Text style={s.pendingBadgeText}>{pendingCount}</Text>
             </View>
           )}
+        </View>
+
+        <View style={s.requestLinks}>
+          <TouchableOpacity
+            style={[s.requestLinkBtn, { backgroundColor: colors.primary, borderColor: colors.primary }]}
+            onPress={() => navigation.navigate('ActiveRentals')}
+            activeOpacity={0.85}
+          >
+            <View style={s.requestLinkLeft}>
+              <MaterialIcons name="play-circle-filled" size={15} color="#fff" />
+              <Text style={s.requestLinkText}>Ongoing</Text>
+            </View>
+            <View style={s.requestLinkBadge}>
+              <Text style={s.requestLinkBadgeText}>{ongoingCount}</Text>
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[s.requestLinkBtn, { backgroundColor: colors.primary, borderColor: colors.primary }]}
+            onPress={() => navigation.navigate('ExtensionRequests')}
+            activeOpacity={0.85}
+          >
+            <View style={s.requestLinkLeft}>
+              <MaterialIcons name="event-repeat" size={15} color="#fff" />
+              <Text style={s.requestLinkText}>Extensions</Text>
+            </View>
+            <View style={s.requestLinkBadge}>
+              <Text style={s.requestLinkBadgeText}>{pendingExtensions}</Text>
+            </View>
+          </TouchableOpacity>
         </View>
 
         {/* Search */}
@@ -149,30 +203,6 @@ const RentalRequests = ({ navigation }: Props) => {
           )}
         </View>
       </View>
-
-      {/* Filter chips */}
-      <ScrollView
-        horizontal showsHorizontalScrollIndicator={false}
-        contentContainerStyle={s.filterScroll}
-        style={[s.filterWrap, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}
-      >
-        {FILTERS.map((f) => {
-          const count = f !== 'all' ? rentals.filter((r) => r.status === f).length : rentals.length;
-          const active = filter === f;
-          return (
-            <TouchableOpacity
-              key={f}
-              style={[s.chip, active ? { backgroundColor: colors.primary } : { backgroundColor: colors.cardAlt, borderColor: colors.border, borderWidth: 1 }]}
-              onPress={() => setFilter(f)}
-            >
-              <Text style={[s.chipText, { color: active ? '#FFF' : colors.textSecondary }]}>
-                {f === 'all' ? 'All' : f.charAt(0).toUpperCase() + f.slice(1)}
-                {count > 0 ? ` (${count})` : ''}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
 
       {/* List */}
       <FlatList
@@ -243,7 +273,7 @@ const RentalRequests = ({ navigation }: Props) => {
           <EmptyState
             icon="assignment"
             title="No requests found"
-            subtitle={`No ${filter} rental requests.`}
+            subtitle="No pending rental requests."
           />
         }
       />
@@ -447,6 +477,29 @@ const s = StyleSheet.create({
     marginTop: 4,
   },
   pendingBadgeText: { color: '#fff', fontSize: 13, fontWeight: '800' },
+  requestLinks: { flexDirection: 'row', gap: 8 },
+  requestLinkBtn: {
+    flex: 1,
+    height: 36,
+    borderRadius: 10,
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  requestLinkLeft: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  requestLinkText: { fontSize: 12, fontWeight: '800', color: '#fff' },
+  requestLinkBadge: {
+    minWidth: 22,
+    height: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 6,
+    backgroundColor: 'rgba(255,255,255,0.24)',
+  },
+  requestLinkBadgeText: { color: '#fff', fontSize: 10, fontWeight: '900' },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -457,14 +510,6 @@ const s = StyleSheet.create({
     gap: 8,
   },
   searchInput: { flex: 1, fontSize: 13, fontWeight: '500' },
-  filterWrap: { borderBottomWidth: 1 },
-  filterScroll: { paddingHorizontal: 16, paddingVertical: 10, gap: 8, flexDirection: 'row' },
-  chip: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 20,
-  },
-  chipText: { fontSize: 12, fontWeight: '700' },
   list: { paddingTop: 14, paddingHorizontal: 16, paddingBottom: 32, gap: 10 },
   card: {
     borderRadius: 16,

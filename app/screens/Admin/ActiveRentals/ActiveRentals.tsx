@@ -15,9 +15,9 @@ import LoadingSpinner from '../../../../src/components/LoadingSpinner/LoadingSpi
 
 type Props = { navigation: NativeStackNavigationProp<AdminStackParamList> };
 
-// Only these statuses belong here
-const ALLOWED = ['active', 'returned', 'cancelled'] as const;
-type FilterType = 'all' | 'active' | 'returned' | 'cancelled';
+// Approved rentals are reserved/ongoing work and should be visible here too.
+const ALLOWED = ['approved', 'active', 'returned', 'cancelled'] as const;
+type FilterType = 'all' | 'approved' | 'active' | 'returned' | 'cancelled';
 
 const ActiveRentals = ({ navigation }: Props) => {
   const { colors } = useTheme();
@@ -43,6 +43,7 @@ const ActiveRentals = ({ navigation }: Props) => {
   const filtered = filter === 'all' ? rentals : rentals.filter(r => r.status === filter);
   const counts: Record<string, number> = {};
   ALLOWED.forEach(s => { counts[s] = rentals.filter(r => r.status === s).length; });
+  const ongoingCount = (counts.approved ?? 0) + (counts.active ?? 0);
 
   const getDaysLeft = (endDate: string): number => {
     const now = new Date(); now.setHours(0, 0, 0, 0);
@@ -61,12 +62,18 @@ const ActiveRentals = ({ navigation }: Props) => {
         backgroundColor: colors.surface,
       }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={{ width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.cardAlt }}
+          >
+            <MaterialIcons name="arrow-back" size={20} color={colors.text} />
+          </TouchableOpacity>
           <Text style={{ fontSize: 22, fontWeight: '800', color: colors.text, flex: 1 }}>
             Ongoing Rentals
           </Text>
-          {counts['active'] > 0 && (
+          {ongoingCount > 0 && (
             <View style={{ backgroundColor: colors.success, borderRadius: 12, paddingHorizontal: 8, paddingVertical: 3 }}>
-              <Text style={{ color: '#FFF', fontSize: 12, fontWeight: '800' }}>{counts['active']} active</Text>
+              <Text style={{ color: '#FFF', fontSize: 12, fontWeight: '800' }}>{ongoingCount} ongoing</Text>
             </View>
           )}
         </View>
@@ -115,6 +122,7 @@ const ActiveRentals = ({ navigation }: Props) => {
           const customer = (item as unknown as { customer: { full_name: string } }).customer;
           const daysLeft = getDaysLeft(item.end_date);
           const isActive = item.status === 'active';
+          const isApproved = item.status === 'approved';
           const urgentColor = daysLeft <= 3 ? colors.danger : daysLeft <= 7 ? colors.warning : colors.success;
 
           return (
@@ -149,8 +157,8 @@ const ActiveRentals = ({ navigation }: Props) => {
                   </View>
                 </View>
 
-                {/* Days left pill — only for active */}
-                {isActive && (
+                {/* Days left pill for approved/active rentals */}
+                {(isActive || isApproved) && (
                   <View style={{
                     flexDirection: 'row', alignItems: 'center', gap: 6,
                     alignSelf: 'flex-start',
@@ -165,7 +173,9 @@ const ActiveRentals = ({ navigation }: Props) => {
                       color={urgentColor}
                     />
                     <Text style={{ fontSize: 12, fontWeight: '700', color: urgentColor }}>
-                      {daysLeft <= 0
+                      {isApproved
+                        ? 'Approved - ready to activate'
+                        : daysLeft <= 0
                         ? 'Overdue — return expected'
                         : daysLeft === 1
                         ? 'Due tomorrow'

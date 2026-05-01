@@ -159,23 +159,18 @@ const AdminTabNav = () => {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const [pendingRentals, setPendingRentals] = useState(0);
-  const [pendingExtensions, setPendingExtensions] = useState(0);
 
   useEffect(() => {
     supabase.from('rentals').select('id', { count: 'exact', head: true }).eq('status', 'pending')
       .then(({ count }) => setPendingRentals(count ?? 0));
-    supabase.from('extension_requests').select('id', { count: 'exact', head: true }).eq('status', 'pending')
-      .then(({ count }) => setPendingExtensions(count ?? 0));
   }, []);
 
   const ADMIN_ICON_MAP: Record<string, keyof typeof MaterialIcons.glyphMap> = {
     AdminDashboard: 'dashboard',
     Equipment: 'construction',
     RentalRequests: 'assignment',
-    ActiveRentals: 'play-circle-filled',
     Users: 'people',
     AdminAnalytics: 'bar-chart',
-    ExtensionTab: 'event-repeat',
     AdminProfile: 'person',
   };
 
@@ -201,14 +196,11 @@ const AdminTabNav = () => {
         tabBarIcon: ({ color, focused, size }) => {
           const iconName = ADMIN_ICON_MAP[route.name] ?? 'circle';
           const rentalsBadge = route.name === 'RentalRequests' && pendingRentals > 0;
-          const extensionsBadge = route.name === 'ExtensionTab' && pendingExtensions > 0;
-          const hasBadge = rentalsBadge || extensionsBadge;
-          const badgeCount = rentalsBadge ? pendingRentals : pendingExtensions;
 
           return (
             <View style={{ width: 36, height: 28, alignItems: 'center', justifyContent: 'center' }}>
               <MaterialIcons name={iconName} size={size} color={color} />
-              {hasBadge && <TabBadge count={badgeCount} color="#DC2626" />}
+              {rentalsBadge && <TabBadge count={pendingRentals} color="#DC2626" />}
             </View>
           );
         },
@@ -217,10 +209,8 @@ const AdminTabNav = () => {
       <AdminTab.Screen name="AdminDashboard" component={AdminDashboard} options={{ title: 'Dashboard' }} />
       <AdminTab.Screen name="Equipment" component={EquipmentManage} />
       <AdminTab.Screen name="RentalRequests" component={RentalRequests} options={{ title: 'Requests' }} />
-      <AdminTab.Screen name="ActiveRentals" component={ActiveRentals} options={{ title: 'Ongoing' }} />
       <AdminTab.Screen name="Users" component={Users} />
       <AdminTab.Screen name="AdminAnalytics" component={Analytics} options={{ title: 'Analytics' }} />
-      <AdminTab.Screen name="ExtensionTab" component={ExtensionRequests} options={{ title: 'Extensions' }} />
       <AdminTab.Screen name="AdminProfile" component={AdminProfile} options={{ title: 'Profile' }} />
     </AdminTab.Navigator>
   );
@@ -245,6 +235,7 @@ const AdminStackNav = () => (
   <AdminStack.Navigator screenOptions={{ headerShown: false }}>
     <AdminStack.Screen name="AdminTabs" component={AdminTabNav} />
     <AdminStack.Screen name="EquipmentForm" component={EquipmentManage} />
+    <AdminStack.Screen name="ActiveRentals" component={ActiveRentals} />
     <AdminStack.Screen name="RentalDetail" component={RentalDetail} />
     <AdminStack.Screen name="UserDetail" component={UserDetail} />
     <AdminStack.Screen name="ExtensionRequests" component={ExtensionRequests} />
@@ -267,9 +258,9 @@ const AppNavigator = () => {
           <RootStack.Screen name="Register" component={Register} />
         </>
       ) : user.role === 'admin' ? (
-        <RootStack.Screen name="AdminTabs" component={AdminStackNav} />
+        <RootStack.Screen name="AdminRoot" component={AdminStackNav} />
       ) : (
-        <RootStack.Screen name="CustomerTabs" component={CustomerStackNav} />
+        <RootStack.Screen name="CustomerRoot" component={CustomerStackNav} />
       )}
     </RootStack.Navigator>
   );

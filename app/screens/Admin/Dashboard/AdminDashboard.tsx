@@ -52,7 +52,7 @@ const AdminDashboard = ({ navigation }: Props) => {
     const recent = (recentRes.data ?? []) as Rental[];
 
     const revenue = allRentals
-      .filter((r) => ['active', 'returned', 'approved'].includes(r.status))
+      .filter((r) => r.status === 'returned')
       .reduce((sum, r) => sum + r.total_cost, 0);
 
     setStats({

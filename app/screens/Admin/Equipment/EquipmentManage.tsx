@@ -160,6 +160,9 @@ const EquipmentManage = ({ route }: Props) => {
       if (editingId) {
         const existing = equipment.find((eq) => eq.id === editingId);
         const rentedQuantity = existing ? Math.max(0, existing.total_quantity - existing.available_quantity) : 0;
+        if (parseInt(form.total_quantity) < rentedQuantity) {
+          throw new Error(`Total quantity cannot be less than ${rentedQuantity} currently rented unit${rentedQuantity === 1 ? '' : 's'}.`);
+        }
         const { error } = await supabase.from('equipment')
           .update({ ...payload, available_quantity: Math.max(0, parseInt(form.total_quantity) - rentedQuantity) })
           .eq('id', editingId);
@@ -219,7 +222,10 @@ const EquipmentManage = ({ route }: Props) => {
       {
         text: 'Clear Flag',
         onPress: async () => {
-          const { error } = await supabase.rpc('clear_maintenance_flag', { equipment_id: eq.id });
+          const { error } = await supabase
+            .from('equipment')
+            .update({ needs_maintenance: false, maintenance_notes: null })
+            .eq('id', eq.id);
           if (error) showError(error.message);
           else { showSuccess(`${eq.name} cleared for service`); load(); }
         },

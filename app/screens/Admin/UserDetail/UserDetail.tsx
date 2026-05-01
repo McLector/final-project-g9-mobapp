@@ -110,7 +110,7 @@ const UserDetail = ({ navigation, route }: Props) => {
 
   // Stats
   const totalSpend = rentals
-    .filter((r) => ['approved', 'active', 'returned'].includes(r.status))
+    .filter((r) => r.status === 'returned')
     .reduce((s, r) => s + r.total_cost, 0);
   const activeCount = rentals.filter((r) => r.status === 'active').length;
   const completedCount = rentals.filter((r) => r.status === 'returned').length;

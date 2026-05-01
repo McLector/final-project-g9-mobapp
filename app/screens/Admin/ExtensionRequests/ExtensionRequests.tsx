@@ -11,6 +11,7 @@ import useTheme from '../../../../src/hooks/useTheme';
 import { useToast } from '../../../../src/hooks/useToast';
 import { AdminStackParamList } from '../../../../src/types';
 import { formatDate } from '../../../../src/utils/format';
+import { assertRangeAvailability } from '../../../../src/utils/availability';
 import EmptyState from '../../../../src/components/EmptyState/EmptyState';
 import LoadingSpinner from '../../../../src/components/LoadingSpinner/LoadingSpinner';
 
@@ -25,6 +26,8 @@ interface ExtRequest {
   admin_note: string | null;
   created_at: string;
   rental: {
+    equipment_id: string;
+    quantity: number;
     start_date: string;
     end_date: string;
     equipment: { name: string };
@@ -48,7 +51,7 @@ const ExtensionRequests = ({ navigation }: Props) => {
       .from('extension_requests')
       .select(`
         *,
-        rental:rentals(start_date, end_date, equipment:equipment(name)),
+        rental:rentals(equipment_id, quantity, start_date, end_date, equipment:equipment(name)),
         customer:profiles(full_name, email)
       `)
       .order('created_at', { ascending: false });
@@ -63,22 +66,32 @@ const ExtensionRequests = ({ navigation }: Props) => {
   const filtered = filter === 'all' ? requests : requests.filter(r => r.status === filter);
   const pendingCount = requests.filter(r => r.status === 'pending').length;
 
-  const handleAction = async (status: 'approved' | 'rejected') => {
-    if (!selected) return;
+  const handleAction = async (status: 'approved' | 'rejected', request = selected) => {
+    if (!request) return;
     setActionLoading(true);
     try {
+      if (status === 'approved') {
+        await assertRangeAvailability(
+          request.rental.equipment_id,
+          request.rental.start_date,
+          request.requested_end_date,
+          request.rental.quantity,
+          request.rental_id
+        );
+      }
+
       const { error: extError } = await supabase
         .from('extension_requests')
         .update({ status, admin_note: adminNote.trim() || null })
-        .eq('id', selected.id);
+        .eq('id', request.id);
       if (extError) throw new Error(extError.message);
 
       // If approved, update the rental end_date
       if (status === 'approved') {
         const { error: rentalError } = await supabase
           .from('rentals')
-          .update({ end_date: selected.requested_end_date })
-          .eq('id', selected.rental_id);
+          .update({ end_date: request.requested_end_date })
+          .eq('id', request.rental_id);
         if (rentalError) throw new Error(rentalError.message);
       }
 
@@ -100,6 +113,12 @@ const ExtensionRequests = ({ navigation }: Props) => {
       {/* Header */}
       <View style={[{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: colors.border, backgroundColor: colors.surface }]}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={{ width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.cardAlt }}
+          >
+            <MaterialIcons name="arrow-back" size={20} color={colors.text} />
+          </TouchableOpacity>
           <Text style={{ fontSize: 22, fontWeight: '800', color: colors.text, flex: 1 }}>Extension Requests</Text>
           {pendingCount > 0 && (
             <View style={{ backgroundColor: colors.danger, borderRadius: 12, paddingHorizontal: 8, paddingVertical: 3 }}>
@@ -170,14 +189,14 @@ const ExtensionRequests = ({ navigation }: Props) => {
               <View style={{ flexDirection: 'row', borderTopWidth: 1, borderTopColor: colors.border }}>
                 <TouchableOpacity
                   style={[{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, paddingVertical: 10 }, { backgroundColor: colors.successLight }]}
-                  onPress={() => { setSelected(item); handleAction('approved'); }}
+                  onPress={() => { setSelected(item); handleAction('approved', item); }}
                 >
                   <MaterialIcons name="check" size={16} color={colors.success} />
                   <Text style={{ fontSize: 13, fontWeight: '700', color: colors.success }}>Approve</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, paddingVertical: 10 }, { backgroundColor: colors.dangerLight }]}
-                  onPress={() => { setSelected(item); handleAction('rejected'); }}
+                  onPress={() => { setSelected(item); handleAction('rejected', item); }}
                 >
                   <MaterialIcons name="close" size={16} color={colors.danger} />
                   <Text style={{ fontSize: 13, fontWeight: '700', color: colors.danger }}>Reject</Text>

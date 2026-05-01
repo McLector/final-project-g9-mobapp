@@ -15,6 +15,7 @@ import { useToast } from '../../../../src/hooks/useToast';
 import { Equipment, CustomerStackParamList, RentalDuration } from '../../../../src/types';
 import { validateQuantity } from '../../../../src/utils/validation';
 import { calculateRentalCostBreakdown, formatCurrency, toDateString } from '../../../../src/utils/format';
+import { assertRangeAvailability } from '../../../../src/utils/availability';
 import LoadingSpinner from '../../../../src/components/LoadingSpinner/LoadingSpinner';
 import DatePicker from '../../../../src/components/DatePicker/DatePicker';
 
@@ -138,14 +139,21 @@ const RentalForm = ({ navigation, route }: Props) => {
     return Object.keys(e).length === 0;
   };
 
-  const handleProceedToCheckout = () => {
-    if (validate()) setCheckoutVisible(true);
+  const handleProceedToCheckout = async () => {
+    if (!validate() || !equipment) return;
+    try {
+      await assertRangeAvailability(equipment.id, startDate, endDate, parseInt(quantity));
+      setCheckoutVisible(true);
+    } catch (err: unknown) {
+      showError(err instanceof Error ? err.message : 'Selected dates are not available.');
+    }
   };
 
   const handleSubmit = async () => {
     if (!equipment || !user) return;
     setSubmitting(true);
     try {
+      await assertRangeAvailability(equipment.id, startDate, endDate, parseInt(quantity));
       const { error } = await supabase.from('rentals').insert({
         customer_id: user.id,
         equipment_id: equipment.id,

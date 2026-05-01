@@ -36,17 +36,18 @@ const Analytics = () => {
     ]);
 
     const rentals = (rentalsRes.data ?? []) as Rental[];
-    const paidStatuses = ['approved', 'active', 'returned'];
+    const earnedStatuses = ['returned'];
+    const expectedStatuses = ['pending', 'approved', 'active'];
 
-    const totalRevenue = rentals.filter((r) => paidStatuses.includes(r.status)).reduce((s, r) => s + r.total_cost, 0);
-    const pendingRevenue = rentals.filter((r) => r.status === 'pending').reduce((s, r) => s + r.total_cost, 0);
+    const totalRevenue = rentals.filter((r) => earnedStatuses.includes(r.status)).reduce((s, r) => s + r.total_cost, 0);
+    const pendingRevenue = rentals.filter((r) => expectedStatuses.includes(r.status)).reduce((s, r) => s + r.total_cost, 0);
 
     const eqMap: Record<string, { name: string; count: number; revenue: number }> = {};
     rentals.forEach((r) => {
       const name = r.equipment?.name ?? 'Unknown';
       if (!eqMap[name]) eqMap[name] = { name, count: 0, revenue: 0 };
       eqMap[name].count++;
-      if (paidStatuses.includes(r.status)) eqMap[name].revenue += r.total_cost;
+      if (earnedStatuses.includes(r.status)) eqMap[name].revenue += r.total_cost;
     });
     const topEquipment = Object.values(eqMap).sort((a, b) => b.count - a.count).slice(0, 6);
 
@@ -64,7 +65,7 @@ const Analytics = () => {
       const key = d.toLocaleDateString('en-PH', { month: 'short', year: '2-digit' });
       monthlyMap[key] = 0;
     }
-    rentals.filter((r) => paidStatuses.includes(r.status)).forEach((r) => {
+    rentals.filter((r) => earnedStatuses.includes(r.status)).forEach((r) => {
       const d = new Date(r.created_at);
       const key = d.toLocaleDateString('en-PH', { month: 'short', year: '2-digit' });
       if (key in monthlyMap) monthlyMap[key] += r.total_cost;
@@ -116,7 +117,7 @@ const Analytics = () => {
               <Text style={s.revenueValue}>{formatCurrency(stats.totalRevenue)}</Text>
               <View style={s.pendingRow}>
                 <MaterialIcons name="schedule" size={12} color="#F59E0B" />
-                <Text style={s.pendingText}>{formatCurrency(stats.pendingRevenue)} pending</Text>
+                <Text style={s.pendingText}>{formatCurrency(stats.pendingRevenue)} expected</Text>
               </View>
             </View>
             <View style={s.revenueIconWrap}>
