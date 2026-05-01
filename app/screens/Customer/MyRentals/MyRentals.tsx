@@ -54,6 +54,7 @@ const MyRentals = () => {
   const [selected, setSelected] = useState<Rental | null>(null);
 
   // Extension state
+  const [extensionRental, setExtensionRental] = useState<Rental | null>(null);
   const [extendVisible, setExtendVisible] = useState(false);
   const [extendDate, setExtendDate] = useState('');
   const [extendNote, setExtendNote] = useState('');
@@ -99,62 +100,39 @@ const MyRentals = () => {
   const openExtend = (rental: Rental) => {
     const nextDay = new Date(rental.end_date);
     nextDay.setDate(nextDay.getDate() + 1);
+    setExtensionRental(rental);
+    setSelected(null);
     setExtendDate(toDateString(nextDay));
     setExtendNote('');
     setExtendVisible(true);
   };
 
-  const handleConfirmReceipt = (rentalId: string) => {
-    Alert.alert('Confirm Receipt', 'Confirm that you have received and are now using the equipment?', [
-      { text: 'Not Yet', style: 'cancel' },
-      {
-        text: 'Confirm',
-        onPress: async () => {
-          const { error } = await supabase
-            .from('rentals').update({ status: 'active' })
-            .eq('id', rentalId).eq('customer_id', user?.id).eq('status', 'approved');
-          if (error) showError(error.message);
-          else { setSelected(null); load(); showSuccess('Rental marked as active'); }
-        },
-      },
-    ]);
-  };
-
-  const handleReturn = (rentalId: string) => {
-    Alert.alert('Return Equipment', 'Confirm that you are returning this equipment?', [
-      { text: 'Not Yet', style: 'cancel' },
-      {
-        text: 'Confirm Return', style: 'destructive',
-        onPress: async () => {
-          const { error } = await supabase
-            .from('rentals').update({ status: 'returned' })
-            .eq('id', rentalId).eq('customer_id', user?.id).eq('status', 'active');
-          if (error) showError(error.message);
-          else { setSelected(null); load(); showSuccess('Equipment returned successfully'); }
-        },
-      },
-    ]);
+  const closeExtend = () => {
+    setExtendVisible(false);
+    setExtensionRental(null);
+    setExtendDate('');
+    setExtendNote('');
   };
 
   const handleExtend = async () => {
-    if (!selected || !extendDate) return;
-    if (extendDate <= selected.end_date) {
+    if (!extensionRental || !extendDate || !user?.id) return;
+    if (extendDate <= extensionRental.end_date) {
       showError('New end date must be after the current end date.');
       return;
     }
     setExtendLoading(true);
     try {
       const { error } = await supabase.from('extension_requests').insert({
-        rental_id: selected.id,
-        customer_id: user?.id,
+        rental_id: extensionRental.id,
+        customer_id: user.id,
         requested_end_date: extendDate,
         customer_note: extendNote.trim() || null,
         status: 'pending',
       });
       if (error) throw new Error(error.message);
-      showSuccess('Extension request submitted — awaiting admin approval');
-      setExtendVisible(false);
-      setSelected(null);
+      showSuccess('Extension request submitted - awaiting admin approval');
+      closeExtend();
+      load();
     } catch (err: unknown) {
       showError(err instanceof Error ? err.message : 'Failed to submit extension request.');
     } finally {
@@ -215,7 +193,7 @@ const MyRentals = () => {
             >
               <MaterialIcons
                 name={FILTER_ICONS[f]}
-                size={14}
+                size={12}
                 color={active ? '#FFF' : colors.textMuted}
               />
               <Text style={[s.chipText, { color: active ? '#FFF' : colors.textSecondary }]}>
@@ -371,28 +349,6 @@ const MyRentals = () => {
                     </TouchableOpacity>
                   )}
 
-                  {/* Confirm receipt for approved rentals */}
-                  {selected.status === 'approved' && (
-                    <TouchableOpacity
-                      style={[s.actionOutline, { borderColor: colors.success }]}
-                      onPress={() => handleConfirmReceipt(selected.id)}
-                    >
-                      <MaterialIcons name="inventory" size={16} color={colors.success} />
-                      <Text style={[s.actionOutlineText, { color: colors.success }]}>Confirm Receipt</Text>
-                    </TouchableOpacity>
-                  )}
-
-                  {/* Return for active rentals */}
-                  {selected.status === 'active' && (
-                    <TouchableOpacity
-                      style={[s.actionOutline, { borderColor: colors.success }]}
-                      onPress={() => handleReturn(selected.id)}
-                    >
-                      <MaterialIcons name="assignment-return" size={16} color={colors.success} />
-                      <Text style={[s.actionOutlineText, { color: colors.success }]}>Return Equipment</Text>
-                    </TouchableOpacity>
-                  )}
-
                   {/* Cancel for pending */}
                   {selected.status === 'pending' && (
                     <TouchableOpacity
@@ -411,7 +367,7 @@ const MyRentals = () => {
       </Modal>
 
       {/* Extension modal */}
-      <Modal visible={extendVisible} animationType="slide" transparent onRequestClose={() => setExtendVisible(false)}>
+      <Modal visible={extendVisible} animationType="slide" transparent onRequestClose={closeExtend}>
         <View style={[s.overlay, { backgroundColor: colors.overlay }]}>
           <View style={[s.sheet, { backgroundColor: colors.surface }]}>
             <View style={[s.handle, { backgroundColor: colors.border }]} />
@@ -420,22 +376,22 @@ const MyRentals = () => {
               <Text style={[s.sheetTitle, { color: colors.text }]}>Request Extension</Text>
               <TouchableOpacity
                 style={[s.closeBtn, { backgroundColor: colors.cardAlt }]}
-                onPress={() => setExtendVisible(false)}
+                onPress={closeExtend}
               >
                 <MaterialIcons name="close" size={18} color={colors.text} />
               </TouchableOpacity>
             </View>
 
             <ScrollView contentContainerStyle={s.sheetBody}>
-              {selected && (
+              {extensionRental && (
                 <View style={[s.infoGrid, { borderColor: colors.border }]}>
                   <View style={[s.infoRow, { borderBottomWidth: 1, borderBottomColor: colors.border }]}>
                     <Text style={[s.infoLabel, { color: colors.textMuted }]}>Equipment</Text>
-                    <Text style={[s.infoValue, { color: colors.text }]}>{selected.equipment?.name}</Text>
+                    <Text style={[s.infoValue, { color: colors.text }]}>{extensionRental.equipment?.name}</Text>
                   </View>
                   <View style={s.infoRow}>
                     <Text style={[s.infoLabel, { color: colors.textMuted }]}>Current End Date</Text>
-                    <Text style={[s.infoValue, { color: colors.text }]}>{formatDate(selected.end_date)}</Text>
+                    <Text style={[s.infoValue, { color: colors.text }]}>{formatDate(extensionRental.end_date)}</Text>
                   </View>
                 </View>
               )}
@@ -521,17 +477,27 @@ const s = StyleSheet.create({
     gap: 8,
   },
   searchInput: { flex: 1, fontSize: 13, fontWeight: '500' },
-  filterWrap: { borderBottomWidth: 1 },
-  filterScroll: { paddingHorizontal: 16, paddingVertical: 12, gap: 8, flexDirection: 'row' },
+  filterWrap: { borderBottomWidth: 1, flexGrow: 0, flexShrink: 0 },
+  filterScroll: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    gap: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 9,
+    justifyContent: 'center',
+    alignSelf: 'center',
+    flexGrow: 0,
+    flexShrink: 0,
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
     borderRadius: 20,
   },
-  chipText: { fontSize: 13, fontWeight: '700' },
+  chipText: { fontSize: 12, fontWeight: '600' },
   list: { paddingTop: 14, paddingHorizontal: 16, paddingBottom: 32, gap: 10 },
   card: {
     flexDirection: 'row',
