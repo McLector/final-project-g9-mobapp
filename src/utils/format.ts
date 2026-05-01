@@ -22,27 +22,85 @@ export const getDaysDiff = (start: string, end: string): number => {
   return Math.ceil((e.getTime() - s.getTime()) / (1000 * 60 * 60 * 24));
 };
 
+export const getRentalDurationType = (
+  startDate: Date,
+  endDate: Date
+): 'daily' | 'weekly' | 'monthly' => {
+  const days = Math.max(0, Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)));
+  if (days >= 30) return 'monthly';
+  if (days >= 7) return 'weekly';
+  return 'daily';
+};
+
+export const getRentalDiscountRate = (durationType: 'daily' | 'weekly' | 'monthly'): number => {
+  if (durationType === 'weekly') return 0.05;
+  if (durationType === 'monthly') return 0.1;
+  return 0;
+};
+
+export const calculateRentalCostBreakdown = (
+  dailyRate: number,
+  weeklyRate: number,
+  monthlyRate: number,
+  startDate: Date,
+  endDate: Date,
+  quantity: number
+) => {
+  const days = Math.max(0, Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)));
+  const durationType = getRentalDurationType(startDate, endDate);
+  const units = Math.max(0, quantity);
+  const dailySubtotal = dailyRate * days * units;
+  const billingCycles = durationType === 'daily'
+    ? days
+    : durationType === 'weekly'
+      ? Math.ceil(days / 7)
+      : Math.ceil(days / 30);
+  const cycleRate = durationType === 'daily'
+    ? dailyRate
+    : durationType === 'weekly'
+      ? weeklyRate
+      : monthlyRate;
+  const packageSubtotal = cycleRate * billingCycles * units;
+  const discountRate = getRentalDiscountRate(durationType);
+  const discountAmount = cycleRate * units * discountRate;
+  const total = packageSubtotal - discountAmount;
+
+  return {
+    days,
+    durationType,
+    billingCycles,
+    cycleRate,
+    dailySubtotal,
+    packageSubtotal,
+    discountRate,
+    discountAmount,
+    total,
+  };
+};
+
 export const calculateRentalCost = (
   dailyRate: number,
   weeklyRate: number,
   monthlyRate: number,
   startDate: Date,
   endDate: Date,
-  durationType: 'daily' | 'weekly' | 'monthly',
   quantity: number
 ): number => {
-  const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-  let baseRate = 0;
-
-  if (durationType === 'daily') baseRate = dailyRate * days;
-  else if (durationType === 'weekly') baseRate = weeklyRate * Math.ceil(days / 7);
-  else baseRate = monthlyRate * Math.ceil(days / 30);
-
-  return baseRate * quantity;
+  return calculateRentalCostBreakdown(
+    dailyRate,
+    weeklyRate,
+    monthlyRate,
+    startDate,
+    endDate,
+    quantity
+  ).total;
 };
 
 export const toDateString = (date: Date): string => {
-  return date.toISOString().split('T')[0];
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 };
 
 export const getInitials = (name: string): string => {

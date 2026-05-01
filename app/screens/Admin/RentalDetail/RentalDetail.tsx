@@ -74,7 +74,7 @@ const RentalDetail = ({ navigation, route }: Props) => {
 
   useEffect(() => { load(); }, [load]);
 
-  const updateStatus = async (newStatus: RentalStatus, extra: Record<string, string> = {}) => {
+  const updateStatus = async (newStatus: RentalStatus, extra: Record<string, any> = {}) => {
     if (!rental) return;
     setActionLoading(true);
     try {

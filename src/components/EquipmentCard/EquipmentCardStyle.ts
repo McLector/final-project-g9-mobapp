@@ -96,6 +96,74 @@ const EquipmentCardStyle = StyleSheet.create({
     justifyContent: 'center',
     zIndex: 2,
   },
+  // Horizontal card
+  hCard: {
+    width: 164,
+    borderRadius: 12,
+    marginRight: 12,
+    overflow: 'hidden',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  hImageWrap: {
+    height: 112,
+    position: 'relative',
+  },
+  hImage: {
+    width: '100%',
+    height: '100%',
+  },
+  hGradient: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  availDot: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  hBody: {
+    padding: 12,
+  },
+  catTag: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    marginBottom: 6,
+  },
+  catTagText: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+  },
+  hName: {
+    fontSize: 14,
+    fontWeight: '700',
+    lineHeight: 18,
+    marginBottom: 6,
+    letterSpacing: 0,
+  },
+  hRate: {
+    fontSize: 15,
+    fontWeight: '800',
+    letterSpacing: 0,
+  },
+  hRateUnit: {
+    fontSize: 11,
+    fontWeight: '400',
+  },
+  hAvail: {
+    fontSize: 11,
+    fontWeight: '600',
+    marginTop: 3,
+  },
 });
 
 export default EquipmentCardStyle;

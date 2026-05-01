@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  KeyboardAvoidingView, Platform, ScrollView, Text,
+  KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text,
   TextInput, TouchableOpacity, View, ActivityIndicator, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -14,18 +14,13 @@ import {
   validateFullName,
 } from '../../../../src/utils/validation';
 import { RootStackParamList } from '../../../../src/types';
-import RegisterStyle from './RegisterStyle';
 
 type Props = { navigation: NativeStackNavigationProp<RootStackParamList, 'Register'> };
 
-// Format PH phone as user types: +63-9XX-XXX-XXXX or 09XX-XXX-XXXX
 const formatPhoneInput = (raw: string): string => {
-  // Strip everything except digits and leading +
   const hasPlus = raw.startsWith('+');
   let digits = raw.replace(/[^\d]/g, '');
-
   if (hasPlus || digits.startsWith('63')) {
-    // International format: +63-9XX-XXX-XXXX
     if (digits.startsWith('63')) digits = digits.slice(2);
     if (digits.length === 0) return '+63';
     const a = digits.slice(0, 3);
@@ -36,7 +31,6 @@ const formatPhoneInput = (raw: string): string => {
     if (c) result += '-' + c;
     return result;
   } else {
-    // Local format: 09XX-XXX-XXXX
     if (!digits.startsWith('0')) digits = '0' + digits;
     const a = digits.slice(0, 4);
     const b = digits.slice(4, 7);
@@ -51,8 +45,7 @@ const formatPhoneInput = (raw: string): string => {
 const validatePhilippinePhone = (value: string): string | null => {
   if (!value.trim()) return 'Phone number is required.';
   const cleaned = value.replace(/[\s\-()]/g, '');
-  const valid = /^(\+639\d{9}|09\d{9})$/.test(cleaned);
-  if (!valid) return 'Use format +63-9XX-XXX-XXXX or 09XX-XXX-XXXX';
+  if (!/^(\+639\d{9}|09\d{9})$/.test(cleaned)) return 'Use format +63-9XX-XXX-XXXX or 09XX-XXX-XXXX';
   return null;
 };
 
@@ -86,7 +79,7 @@ const Register = ({ navigation }: Props) => {
     setLoading(true);
     try {
       await signUp(email.trim().toLowerCase(), password, fullName.trim(), phone.trim());
-      Alert.alert('Account Created', 'Welcome to StarkRent! Please sign in.');
+      Alert.alert('Account Created', 'Welcome to ConstructRent! Please sign in.');
       navigation.navigate('Login');
     } catch (err: unknown) {
       const raw = err instanceof Error ? err.message : '';
@@ -104,28 +97,28 @@ const Register = ({ navigation }: Props) => {
   return (
     <LinearGradient
       colors={isDark ? ['#0F172A', '#1E293B'] : ['#0F172A', '#1E3A5F']}
-      style={RegisterStyle.gradient}
+      style={s.gradient}
     >
-      <SafeAreaView style={RegisterStyle.safeArea} edges={['top', 'bottom']}>
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={RegisterStyle.flex}>
-          <ScrollView contentContainerStyle={RegisterStyle.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-            <TouchableOpacity style={RegisterStyle.backBtn} onPress={() => navigation.goBack()}>
+      <SafeAreaView style={s.safeArea} edges={['top', 'bottom']}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={s.flex}>
+          <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+            <TouchableOpacity style={s.backBtn} onPress={() => navigation.goBack()}>
               <MaterialIcons name="arrow-back" size={24} color="#FFFFFF" />
             </TouchableOpacity>
 
-            <View style={RegisterStyle.header}>
-              <Text style={RegisterStyle.title}>Create Account</Text>
-              <Text style={RegisterStyle.subtitle}>Join StarkRent to access premium construction equipment</Text>
+            <View style={s.header}>
+              <Text style={s.title}>Create Account</Text>
+              <Text style={s.subtitle}>Join ConstructRent to access premium construction equipment</Text>
             </View>
 
-            <View style={[RegisterStyle.card, { backgroundColor: colors.surface }]}>
+            <View style={[s.card, { backgroundColor: colors.surface }]}>
               {/* Full Name */}
-              <View style={RegisterStyle.fieldGroup}>
-                <Text style={[RegisterStyle.label, { color: colors.textSecondary }]}>Full Name</Text>
-                <View style={[RegisterStyle.inputWrapper, { backgroundColor: colors.inputBg, borderColor: errors.fullName ? colors.danger : colors.inputBorder }]}>
+              <View style={s.fieldGroup}>
+                <Text style={[s.label, { color: colors.textSecondary }]}>Full Name</Text>
+                <View style={[s.inputWrapper, { backgroundColor: colors.inputBg, borderColor: errors.fullName ? colors.danger : colors.inputBorder }]}>
                   <MaterialIcons name="person" size={18} color={colors.textMuted} />
                   <TextInput
-                    style={[RegisterStyle.input, { color: colors.text }]}
+                    style={[s.input, { color: colors.text }]}
                     placeholder="Juan dela Cruz"
                     placeholderTextColor={colors.placeholder}
                     value={fullName}
@@ -133,16 +126,16 @@ const Register = ({ navigation }: Props) => {
                     autoCapitalize="words"
                   />
                 </View>
-                {errors.fullName ? <Text style={[RegisterStyle.error, { color: colors.danger }]}>{errors.fullName}</Text> : null}
+                {errors.fullName ? <Text style={[s.error, { color: colors.danger }]}>{errors.fullName}</Text> : null}
               </View>
 
               {/* Email */}
-              <View style={RegisterStyle.fieldGroup}>
-                <Text style={[RegisterStyle.label, { color: colors.textSecondary }]}>Email</Text>
-                <View style={[RegisterStyle.inputWrapper, { backgroundColor: colors.inputBg, borderColor: errors.email ? colors.danger : colors.inputBorder }]}>
+              <View style={s.fieldGroup}>
+                <Text style={[s.label, { color: colors.textSecondary }]}>Email</Text>
+                <View style={[s.inputWrapper, { backgroundColor: colors.inputBg, borderColor: errors.email ? colors.danger : colors.inputBorder }]}>
                   <MaterialIcons name="email" size={18} color={colors.textMuted} />
                   <TextInput
-                    style={[RegisterStyle.input, { color: colors.text }]}
+                    style={[s.input, { color: colors.text }]}
                     placeholder="you@example.com"
                     placeholderTextColor={colors.placeholder}
                     value={email}
@@ -151,16 +144,16 @@ const Register = ({ navigation }: Props) => {
                     autoCapitalize="none"
                   />
                 </View>
-                {errors.email ? <Text style={[RegisterStyle.error, { color: colors.danger }]}>{errors.email}</Text> : null}
+                {errors.email ? <Text style={[s.error, { color: colors.danger }]}>{errors.email}</Text> : null}
               </View>
 
-              {/* Phone - with format hint */}
-              <View style={RegisterStyle.fieldGroup}>
-                <Text style={[RegisterStyle.label, { color: colors.textSecondary }]}>Phone Number</Text>
-                <View style={[RegisterStyle.inputWrapper, { backgroundColor: colors.inputBg, borderColor: errors.phone ? colors.danger : colors.inputBorder }]}>
+              {/* Phone */}
+              <View style={s.fieldGroup}>
+                <Text style={[s.label, { color: colors.textSecondary }]}>Phone Number</Text>
+                <View style={[s.inputWrapper, { backgroundColor: colors.inputBg, borderColor: errors.phone ? colors.danger : colors.inputBorder }]}>
                   <MaterialIcons name="phone" size={18} color={colors.textMuted} />
                   <TextInput
-                    style={[RegisterStyle.input, { color: colors.text }]}
+                    style={[s.input, { color: colors.text }]}
                     placeholder="+63 993-525-6243"
                     placeholderTextColor={colors.placeholder}
                     value={phone}
@@ -168,19 +161,17 @@ const Register = ({ navigation }: Props) => {
                     keyboardType="phone-pad"
                   />
                 </View>
-                <Text style={[RegisterStyle.hint, { color: colors.textMuted }]}>
-                  Format: +63 9XX-XXX-XXXX or 09XX-XXX-XXXX
-                </Text>
-                {errors.phone ? <Text style={[RegisterStyle.error, { color: colors.danger }]}>{errors.phone}</Text> : null}
+                <Text style={[s.hint, { color: colors.textMuted }]}>Format: +63 9XX-XXX-XXXX or 09XX-XXX-XXXX</Text>
+                {errors.phone ? <Text style={[s.error, { color: colors.danger }]}>{errors.phone}</Text> : null}
               </View>
 
               {/* Password */}
-              <View style={RegisterStyle.fieldGroup}>
-                <Text style={[RegisterStyle.label, { color: colors.textSecondary }]}>Password</Text>
-                <View style={[RegisterStyle.inputWrapper, { backgroundColor: colors.inputBg, borderColor: errors.password ? colors.danger : colors.inputBorder }]}>
+              <View style={s.fieldGroup}>
+                <Text style={[s.label, { color: colors.textSecondary }]}>Password</Text>
+                <View style={[s.inputWrapper, { backgroundColor: colors.inputBg, borderColor: errors.password ? colors.danger : colors.inputBorder }]}>
                   <MaterialIcons name="lock" size={18} color={colors.textMuted} />
                   <TextInput
-                    style={[RegisterStyle.input, { color: colors.text }]}
+                    style={[s.input, { color: colors.text }]}
                     placeholder="Min. 6 characters"
                     placeholderTextColor={colors.placeholder}
                     value={password}
@@ -193,16 +184,16 @@ const Register = ({ navigation }: Props) => {
                     <MaterialIcons name={showPassword ? 'visibility-off' : 'visibility'} size={18} color={colors.textMuted} />
                   </TouchableOpacity>
                 </View>
-                {errors.password ? <Text style={[RegisterStyle.error, { color: colors.danger }]}>{errors.password}</Text> : null}
+                {errors.password ? <Text style={[s.error, { color: colors.danger }]}>{errors.password}</Text> : null}
               </View>
 
               {/* Confirm Password */}
-              <View style={RegisterStyle.fieldGroup}>
-                <Text style={[RegisterStyle.label, { color: colors.textSecondary }]}>Confirm Password</Text>
-                <View style={[RegisterStyle.inputWrapper, { backgroundColor: colors.inputBg, borderColor: errors.confirmPassword ? colors.danger : colors.inputBorder }]}>
+              <View style={s.fieldGroup}>
+                <Text style={[s.label, { color: colors.textSecondary }]}>Confirm Password</Text>
+                <View style={[s.inputWrapper, { backgroundColor: colors.inputBg, borderColor: errors.confirmPassword ? colors.danger : colors.inputBorder }]}>
                   <MaterialIcons name="lock-outline" size={18} color={colors.textMuted} />
                   <TextInput
-                    style={[RegisterStyle.input, { color: colors.text }]}
+                    style={[s.input, { color: colors.text }]}
                     placeholder="Re-enter your password"
                     placeholderTextColor={colors.placeholder}
                     value={confirmPassword}
@@ -215,22 +206,22 @@ const Register = ({ navigation }: Props) => {
                     <MaterialIcons name={showConfirmPassword ? 'visibility-off' : 'visibility'} size={18} color={colors.textMuted} />
                   </TouchableOpacity>
                 </View>
-                {errors.confirmPassword ? <Text style={[RegisterStyle.error, { color: colors.danger }]}>{errors.confirmPassword}</Text> : null}
+                {errors.confirmPassword ? <Text style={[s.error, { color: colors.danger }]}>{errors.confirmPassword}</Text> : null}
               </View>
 
               <TouchableOpacity
-                style={[RegisterStyle.button, { backgroundColor: colors.primary }]}
+                style={[s.button, { backgroundColor: colors.primary }]}
                 onPress={handleRegister}
                 disabled={loading}
                 activeOpacity={0.85}
               >
-                {loading ? <ActivityIndicator color="#FFFFFF" /> : <Text style={RegisterStyle.buttonText}>Create Account</Text>}
+                {loading ? <ActivityIndicator color="#FFFFFF" /> : <Text style={s.buttonText}>Create Account</Text>}
               </TouchableOpacity>
 
-              <View style={RegisterStyle.loginRow}>
-                <Text style={[RegisterStyle.loginText, { color: colors.textMuted }]}>Already have an account? </Text>
+              <View style={s.loginRow}>
+                <Text style={[s.loginText, { color: colors.textMuted }]}>Already have an account? </Text>
                 <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-                  <Text style={[RegisterStyle.loginLink, { color: colors.primary }]}>Sign In</Text>
+                  <Text style={[s.loginLink, { color: colors.primary }]}>Sign In</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -240,5 +231,84 @@ const Register = ({ navigation }: Props) => {
     </LinearGradient>
   );
 };
+
+const s = StyleSheet.create({
+  gradient: { flex: 1 },
+  safeArea: { flex: 1 },
+  flex: { flex: 1 },
+  scroll: {
+    flexGrow: 1,
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    paddingBottom: 40,
+  },
+  backBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+  },
+  header: {
+    marginBottom: 24,
+    gap: 8,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: 0,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.6)',
+    lineHeight: 20,
+  },
+  card: {
+    borderRadius: 24,
+    padding: 24,
+    gap: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 24,
+    elevation: 10,
+  },
+  fieldGroup: { gap: 6 },
+  label: { fontSize: 13, fontWeight: '600' },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 13,
+    borderWidth: 1.5,
+    gap: 10,
+  },
+  input: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '500',
+    padding: 0,
+  },
+  hint: { fontSize: 12 },
+  error: { fontSize: 12 },
+  button: {
+    paddingVertical: 16,
+    borderRadius: 16,
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  buttonText: { fontSize: 16, fontWeight: '700', color: '#FFFFFF' },
+  loginRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loginText: { fontSize: 14 },
+  loginLink: { fontSize: 14, fontWeight: '700' },
+});
 
 export default Register;

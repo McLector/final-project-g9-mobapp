@@ -40,10 +40,10 @@ const RentalCard = ({ item, onPress }: Props) => {
             {equipment?.name ?? 'Equipment'}
           </Text>
           <Text style={[RentalCardStyle.dates, { color: colors.textMuted }]}>
-            {formatDate(item.start_date)} → {formatDate(item.end_date)}
+            {formatDate(item.start_date)} - {formatDate(item.end_date)}
           </Text>
           <Text style={[RentalCardStyle.qty, { color: colors.textSecondary }]}>
-            Qty: {item.quantity} · {item.duration_type}
+            Qty: {item.quantity} | {item.duration_type}
           </Text>
         </View>
 

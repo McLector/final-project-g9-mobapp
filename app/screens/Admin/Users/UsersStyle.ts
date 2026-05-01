@@ -3,10 +3,10 @@ import { StyleSheet } from 'react-native';
 const UsersStyle = StyleSheet.create({
   safe: { flex: 1 },
   header: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12, borderBottomWidth: 1, gap: 4 },
+  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   title: { fontSize: 22, fontWeight: '800' },
   subtitle: { fontSize: 13 },
-  filterBar: { flexGrow: 0, borderBottomWidth: 1 },
-  filterScroll: { paddingHorizontal: 16, paddingVertical: 12, gap: 8, flexDirection: 'row', alignItems: 'center' },
+  filterRow: { flexDirection: 'row', gap: 10, paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1 },
   filterChip: { paddingHorizontal: 16, paddingVertical: 7, borderRadius: 20, borderWidth: 1 },
   filterText: { fontSize: 13, fontWeight: '600' },
   list: { padding: 16, paddingBottom: 32 },
@@ -40,12 +40,6 @@ const UsersStyle = StyleSheet.create({
   detailValue: { fontSize: 13, fontWeight: '600' },
   actionBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 12, paddingVertical: 14 },
   actionBtnText: { fontSize: 15, fontWeight: '700' },
-  searchRow: { paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1 },
-  searchWrapper: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    borderWidth: 1.5, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 9,
-  },
-  searchInput: { flex: 1, fontSize: 14, padding: 0 },
 });
 
 export default UsersStyle;

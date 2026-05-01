@@ -77,18 +77,6 @@ const MyRentalsStyle = StyleSheet.create({
     paddingVertical: 9,
   },
   searchInput: { flex: 1, fontSize: 14, padding: 0 },
-  extendBody: { padding: 20, gap: 16 },
-  extendEquip: { fontSize: 17, fontWeight: '800' },
-  extendCurrent: { fontSize: 13, marginTop: -8 },
-  extendBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 8, borderRadius: 14, paddingVertical: 15,
-  },
-  extendBtnText: { color: '#FFF', fontSize: 16, fontWeight: '700' },
-  sortBar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, gap: 8, borderBottomWidth: 1, flexGrow: 0 },
-  sortLabel: { fontSize: 12, fontWeight: '600' },
-  sortChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, borderWidth: 1.5 },
-  sortText: { fontSize: 12, fontWeight: '600' },
 });
 
 export default MyRentalsStyle;

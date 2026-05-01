@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Modal,
   Text,
@@ -13,7 +13,7 @@ interface Props {
   label: string;
   value: string; // YYYY-MM-DD
   onChange: (date: string) => void;
-  minDate?: string; // YYYY-MM-DD — dates before this are disabled
+  minDate?: string; // YYYY-MM-DD; dates before this are disabled
   maxDate?: string; // YYYY-MM-DD
   error?: string;
 }
@@ -53,6 +53,13 @@ const DatePicker = ({ label, value, onChange, minDate, maxDate, error }: Props) 
   const initialDate = value ? parseYMD(value) : new Date();
   const [viewYear, setViewYear] = useState(initialDate.getFullYear());
   const [viewMonth, setViewMonth] = useState(initialDate.getMonth());
+
+  useEffect(() => {
+    if (!open) return;
+    const selectedDate = value ? parseYMD(value) : parseYMD(effectiveMin);
+    setViewYear(selectedDate.getFullYear());
+    setViewMonth(selectedDate.getMonth());
+  }, [open, value, effectiveMin]);
 
   const goToPrevMonth = useCallback(() => {
     if (viewMonth === 0) { setViewMonth(11); setViewYear((y) => y - 1); }

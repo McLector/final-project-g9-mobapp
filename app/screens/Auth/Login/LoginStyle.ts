@@ -27,7 +27,7 @@ const LoginStyle = StyleSheet.create({
     fontSize: 28,
     fontWeight: '800',
     color: '#FFFFFF',
-    letterSpacing: -0.5,
+    letterSpacing: 0,
   },
   tagline: {
     fontSize: 13,

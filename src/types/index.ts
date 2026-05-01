@@ -1,5 +1,7 @@
 // ─── Auth ───────────────────────────────────────────────────────────────────
 
+import { NavigatorScreenParams } from '@react-navigation/native';
+
 export type UserRole = 'admin' | 'customer';
 
 export interface AppUser {
@@ -30,9 +32,7 @@ export type EquipmentCondition = 'Excellent' | 'Good' | 'Fair' | 'Needs Maintena
 export interface Equipment {
   id: string;
   name: string;
-  categories: EquipmentCategory[];  // multiple categories supported
-  category: EquipmentCategory; // primary (legacy)
-  categories: EquipmentCategory[]; // multi-category  // primary category (first in array, kept for backward compat)
+  category: EquipmentCategory;
   description: string;
   daily_rate: number;
   weekly_rate: number;
@@ -89,8 +89,8 @@ export interface Rental {
 export type RootStackParamList = {
   Login: undefined;
   Register: undefined;
-  CustomerTabs: undefined;
-  AdminTabs: undefined;
+  CustomerTabs: NavigatorScreenParams<CustomerStackParamList> | undefined;
+  AdminTabs: NavigatorScreenParams<AdminStackParamList> | undefined;
 };
 
 export type CustomerTabParamList = {
@@ -104,14 +104,15 @@ export type AdminTabParamList = {
   AdminDashboard: undefined;
   Equipment: undefined;
   RentalRequests: undefined;
+  ActiveRentals: undefined;
   Users: undefined;
   AdminAnalytics: undefined;
+  ExtensionTab: undefined;
   AdminProfile: undefined;
-  ActiveRentals: undefined;
 };
 
 export type CustomerStackParamList = {
-  CustomerTabsRoot: undefined;
+  CustomerTabs: NavigatorScreenParams<CustomerTabParamList> | undefined;
   EquipmentDetail: { equipmentId: string };
   RentalForm: { equipmentId: string };
   CustomerRentalDetail: { rentalId: string };
@@ -122,7 +123,7 @@ export type CustomerStackParamList = {
 };
 
 export type AdminStackParamList = {
-  AdminTabsRoot: undefined;
+  AdminTabs: NavigatorScreenParams<AdminTabParamList> | undefined;
   EquipmentForm: { equipmentId?: string };
   RentalDetail: { rentalId: string };
   UserDetail: { userId: string };

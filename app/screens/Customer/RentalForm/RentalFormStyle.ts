@@ -27,6 +27,7 @@ const RentalFormStyle = StyleSheet.create({
     flex: 1, borderRadius: 12, padding: 12,
     alignItems: 'center', borderWidth: 1.5, gap: 4,
   },
+  autoBillingBox: { borderRadius: 12, padding: 12, borderWidth: 1.5, gap: 4 },
   durationText: { fontSize: 13, fontWeight: '700' },
   durationRate: { fontSize: 11 },
   datesCol: { gap: 0 },

@@ -4,6 +4,7 @@ import {
   FlatList,
   RefreshControl,
   ScrollView,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
@@ -22,11 +23,22 @@ import { EQUIPMENT_CATEGORIES } from '../../../../src/constants';
 import EquipmentCard from '../../../../src/components/EquipmentCard/EquipmentCard';
 import EmptyState from '../../../../src/components/EmptyState/EmptyState';
 import LoadingSpinner from '../../../../src/components/LoadingSpinner/LoadingSpinner';
-import { SkeletonList } from '../../../../src/components/Skeleton/Skeleton';
 import CatalogStyle from './CatalogStyle';
 
 type Props = {
   navigation: NativeStackNavigationProp<CustomerStackParamList>;
+};
+
+const CATEGORY_ICONS: Record<string, keyof typeof MaterialIcons.glyphMap> = {
+  All: 'apps',
+  Excavation: 'terrain',
+  Lifting: 'arrow-upward',
+  'Concrete & Masonry': 'foundation',
+  'Road & Paving': 'traffic',
+  Compaction: 'compress',
+  'Material Handling': 'local-shipping',
+  Drilling: 'rotate-right',
+  'Aerial & Access': 'flight-takeoff',
 };
 
 const Catalog = ({ navigation }: Props) => {
@@ -83,11 +95,7 @@ const Catalog = ({ navigation }: Props) => {
   useEffect(() => {
     let result = [...equipment];
     if (selectedCategory !== 'All') {
-      result = result.filter((e) => {
-        const inArray = Array.isArray(e.categories) && e.categories.includes(selectedCategory);
-        const inSingle = e.category === selectedCategory;
-        return inArray || inSingle;
-      });
+      result = result.filter((e) => e.category === selectedCategory);
     }
     if (search.trim()) {
       result = result.filter(
@@ -106,123 +114,159 @@ const Catalog = ({ navigation }: Props) => {
   const categories: Array<EquipmentCategory | 'All'> = ['All', ...EQUIPMENT_CATEGORIES];
 
   return (
-    <SafeAreaView edges={['top']} style={[CatalogStyle.safe, { backgroundColor: colors.background }]}>
-      {/* Header */}
-      <View style={[CatalogStyle.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
-        <Text style={[CatalogStyle.title, { color: colors.text }]}>Equipment Catalog</Text>
-        <Text style={[CatalogStyle.subtitle, { color: colors.textMuted }]}>
-          {filtered.length} items available
-        </Text>
+    <SafeAreaView edges={['top']} style={[s.safe, { backgroundColor: colors.background }]}>
+      {/* ── Header ── */}
+      <View style={[s.header, { backgroundColor: colors.surface }]}>
+        <View style={s.headerTop}>
+          <View>
+            <Text style={[s.title, { color: colors.text }]}>Equipment</Text>
+            <Text style={[s.subtitle, { color: colors.textMuted }]}>
+              {filtered.length} item{filtered.length !== 1 ? 's' : ''} available
+            </Text>
+          </View>
+        </View>
 
         {/* Search */}
-        <View style={[CatalogStyle.searchWrapper, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}>
+        <View style={[s.searchBar, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}>
           <MaterialIcons name="search" size={20} color={colors.textMuted} />
           <TextInput
-            style={[CatalogStyle.searchInput, { color: colors.text }]}
+            style={[s.searchInput, { color: colors.text }]}
             placeholder="Search equipment..."
             placeholderTextColor={colors.placeholder}
             value={search}
             onChangeText={setSearch}
           />
           {search.length > 0 && (
-            <TouchableOpacity onPress={() => setSearch('')}>
-              <MaterialIcons name="close" size={18} color={colors.textMuted} />
+            <TouchableOpacity onPress={() => setSearch('')} style={s.clearBtn}>
+              <MaterialIcons name="close" size={16} color={colors.textMuted} />
             </TouchableOpacity>
           )}
         </View>
       </View>
 
-      {/* Category filter */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={CatalogStyle.categoryScroll}
-        style={[CatalogStyle.categoryBar, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}
-      >
-        {categories.map((cat) => (
-          <TouchableOpacity
-            key={cat}
-            style={[
-              CatalogStyle.categoryChip,
-              selectedCategory === cat
-                ? { backgroundColor: colors.primary }
-                : { backgroundColor: colors.cardAlt, borderColor: colors.border },
-            ]}
-            onPress={() => setSelectedCategory(cat)}
-          >
-            <Text
-              style={[
-                CatalogStyle.categoryText,
-                { color: selectedCategory === cat ? '#FFFFFF' : colors.textSecondary },
-              ]}
-            >
-              {cat}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-
-      {/* Sort bar */}
-      <View style={[CatalogStyle.sortBar, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
-        <Text style={[CatalogStyle.sortLabel, { color: colors.textMuted }]}>Sort:</Text>
-        {([
-          { key: 'default', label: 'Default' },
-          { key: 'price_asc', label: 'Price ↑' },
-          { key: 'price_desc', label: 'Price ↓' },
-        ] as const).map(s => (
-          <TouchableOpacity
-            key={s.key}
-            style={[CatalogStyle.sortChip,
-              sortBy === s.key
-                ? { backgroundColor: colors.primary, borderColor: colors.primary }
-                : { backgroundColor: colors.cardAlt, borderColor: colors.border }
-            ]}
-            onPress={() => setSortBy(s.key)}
-          >
-            <Text style={[CatalogStyle.sortText, { color: sortBy === s.key ? '#FFF' : colors.textSecondary }]}>
-              {s.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
+      {/* ── Category Filters ── */}
+      <View style={[s.filterWrap, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={s.filterScroll}
+        >
+          {categories.map((cat) => {
+            const active = selectedCategory === cat;
+            const iconName = CATEGORY_ICONS[cat] ?? 'category';
+            return (
+              <TouchableOpacity
+                key={cat}
+                style={[
+                  s.filterChip,
+                  active
+                    ? { backgroundColor: colors.primary }
+                    : { backgroundColor: colors.cardAlt, borderColor: colors.border, borderWidth: 1 },
+                ]}
+                onPress={() => setSelectedCategory(cat)}
+              >
+                <MaterialIcons
+                  name={iconName}
+                  size={13}
+                  color={active ? '#fff' : colors.textSecondary}
+                />
+                <Text style={[s.filterText, { color: active ? '#fff' : colors.textSecondary }]}>
+                  {cat === 'All' ? 'All' : cat.split(' ')[0]}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
       </View>
 
-      {/* List or skeleton */}
-      {loading ? (
-        <View style={{ padding: 16 }}>
-          <SkeletonList count={4} type="equipment" />
-        </View>
-      ) : (
-        <FlatList
-          data={filtered}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={CatalogStyle.list}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              tintColor={colors.primary}
-            />
-          }
-          renderItem={({ item }) => (
-            <EquipmentCard
-              item={item}
-              onPress={() => navigation.navigate('EquipmentDetail', { equipmentId: item.id })}
-              isFavorited={favorites.includes(item.id)}
-              onFavorite={() => toggleFavorite(item.id)}
-            />
-          )}
-          ListEmptyComponent={
-            <EmptyState
-              icon="search-off"
-              title="No equipment found"
-              subtitle="Try adjusting your search or category filter"
-            />
-          }
-        />
-      )}
+      {/* List */}
+      <FlatList
+        data={filtered}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={CatalogStyle.list}
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
+        renderItem={({ item }) => (
+          <EquipmentCard
+            item={item}
+            onPress={() => navigation.navigate('EquipmentDetail', { equipmentId: item.id })}
+          />
+        )}
+        ListEmptyComponent={
+          <EmptyState
+            icon="search-off"
+            title="No equipment found"
+            subtitle="Try adjusting your search or category filter"
+          />
+        }
+      />
     </SafeAreaView>
   );
 };
+
+const s = StyleSheet.create({
+  safe: { flex: 1 },
+  header: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 14,
+  },
+  headerTop: {
+    marginBottom: 14,
+  },
+  title: {
+    fontSize: 26,
+    fontWeight: '800',
+    letterSpacing: 0,
+  },
+  subtitle: {
+    fontSize: 13,
+    marginTop: 2,
+    fontWeight: '500',
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderWidth: 1.5,
+    gap: 10,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '500',
+  },
+  clearBtn: {
+    padding: 2,
+  },
+  filterWrap: {
+    borderBottomWidth: 1,
+  },
+  filterScroll: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 8,
+  },
+  filterChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 20,
+    gap: 5,
+    marginRight: 4,
+  },
+  filterText: {
+    fontSize: 12,
+    fontWeight: '600',
+    letterSpacing: 0.2,
+  },
+  list: {
+    paddingTop: 16,
+    paddingBottom: 24,
+  },
+});
 
 export default Catalog;

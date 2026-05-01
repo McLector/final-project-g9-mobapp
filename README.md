@@ -31,19 +31,13 @@ EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
 ```
 Find these in your Supabase dashboard → Project Settings → API.
 
-### 3. Run the SQL schema
-- Go to your Supabase dashboard
-- Open the **SQL Editor**
-- Paste and run the full contents of `database.sql`
-- This creates all tables, triggers, RLS policies, indexes, and seeds 16 construction equipment items
-
-### 4. Create your first admin account
-After running the SQL, register normally through the app, then manually promote yourself to admin:
+### 3. Create your first admin account
+After the Supabase schema is set up, register normally through the app, then manually promote yourself to admin:
 ```sql
 UPDATE profiles SET role = 'admin' WHERE email = 'your@email.com';
 ```
 
-### 5. Start the app
+### 4. Start the app
 ```bash
 npm start
 ```

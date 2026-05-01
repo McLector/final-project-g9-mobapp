@@ -19,6 +19,7 @@ interface ActiveRental {
 interface PendingRental {
   id: string; start_date: string; end_date: string;
   quantity: number; customer_id: string; created_at: string;
+  status: 'pending';
 }
 
 const DAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
@@ -43,14 +44,18 @@ const AvailabilityCalendar = ({ equipmentId, totalQuantity }: Props) => {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const [activeRes, pendingRes] = await Promise.all([
-      supabase.from('rentals').select('id, start_date, end_date, quantity, status, customer_id')
-        .eq('equipment_id', equipmentId).in('status', ['approved', 'active']).order('start_date'),
-      supabase.from('rentals').select('id, start_date, end_date, quantity, customer_id, created_at')
-        .eq('equipment_id', equipmentId).eq('status', 'pending').order('created_at'),
-    ]);
-    if (activeRes.data) setActiveRentals(activeRes.data as ActiveRental[]);
-    if (pendingRes.data) setPendingRentals(pendingRes.data as PendingRental[]);
+    const { data, error } = await supabase
+      .from('rentals')
+      .select('id, start_date, end_date, quantity, status, customer_id, created_at')
+      .eq('equipment_id', equipmentId)
+      .in('status', ['approved', 'active', 'pending'])
+      .order('start_date');
+
+    if (data) {
+      const all = data as (ActiveRental | PendingRental)[];
+      setActiveRentals(all.filter(r => r.status === 'active' || r.status === 'approved') as ActiveRental[]);
+      setPendingRentals(all.filter(r => r.status === 'pending') as PendingRental[]);
+    }
     setLoading(false);
   }, [equipmentId]);
 

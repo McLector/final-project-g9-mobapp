@@ -55,12 +55,6 @@ const RentalRequestsStyle = StyleSheet.create({
   actionsCol: { gap: 10, marginTop: 4 },
   actionBtnLarge: { borderRadius: 12, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
   actionBtnText: { color: '#FFF', fontSize: 15, fontWeight: '700' },
-  searchRow: { paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1 },
-  searchWrapper: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    borderWidth: 1.5, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 9,
-  },
-  searchInput: { flex: 1, fontSize: 14, padding: 0 },
 });
 
 export default RentalRequestsStyle;
